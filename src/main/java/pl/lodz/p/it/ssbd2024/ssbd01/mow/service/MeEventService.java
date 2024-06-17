@@ -76,7 +76,7 @@ public class MeEventService {
             sessionRepository.saveAndFlush(session);
             return ticketRepository.saveAndFlush(accountTicket.get());
         }
-        if(isReserve) {
+        if (!isReserve) {
             session.setAvailableSeats(session.getAvailableSeats() - 1);
         }
         Ticket ticket = new Ticket(account, session,isReserve);
@@ -138,10 +138,11 @@ public class MeEventService {
             throw new TicketAlreadyCancelledException(ExceptionMessages.TICKET_ALREADY_CANCELLED);
         }
         ticket.setIsNotCancelled(false);
-        ticketRepository.getFirstByReservationTimeMinAndIsReserveTrue()
+        ticketRepository.findFirstByIsReserveTrueOrderByReservationTime()
                 .ifPresentOrElse(ticketRes -> {
                                                 ticketRes.setIsReserve(false);
-                                                ticketRepository.saveAndFlush(ticketRes);},
+                                                ticketRepository.saveAndFlush(ticketRes);
+                                                },
                         () -> ticket.getSession().setAvailableSeats(ticket.getSession().getAvailableSeats() + 1));
         ticketRepository.saveAndFlush(ticket);
     }
