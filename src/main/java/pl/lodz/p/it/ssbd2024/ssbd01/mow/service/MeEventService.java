@@ -137,9 +137,12 @@ public class MeEventService {
         if (!ticket.getIsNotCancelled()) {
             throw new TicketAlreadyCancelledException(ExceptionMessages.TICKET_ALREADY_CANCELLED);
         }
-
         ticket.setIsNotCancelled(false);
-        ticket.getSession().setAvailableSeats(ticket.getSession().getAvailableSeats() + 1);
+        ticketRepository.getFirstByReservationTimeMinAndIsReserveTrue()
+                .ifPresentOrElse(ticketRes -> {
+                                                ticketRes.setIsReserve(false);
+                                                ticketRepository.saveAndFlush(ticketRes);},
+                        () -> ticket.getSession().setAvailableSeats(ticket.getSession().getAvailableSeats() + 1));
         ticketRepository.saveAndFlush(ticket);
     }
 }
