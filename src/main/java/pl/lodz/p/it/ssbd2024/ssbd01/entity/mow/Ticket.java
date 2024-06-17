@@ -39,7 +39,7 @@ public class Ticket extends ControlledEntity {
     private LocalDateTime reservationTime;
 
     @NotNull
-    @Column(nullable = false)
+    @Column(name ="is_reserve", nullable = false)
     private Boolean isReserve;
 
     public Ticket(Account account, Session session, Boolean isReserve) {
