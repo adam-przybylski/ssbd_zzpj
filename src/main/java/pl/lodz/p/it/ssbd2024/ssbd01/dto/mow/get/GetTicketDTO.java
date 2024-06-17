@@ -21,6 +21,7 @@ public record GetTicketDTO(
 
         String locationName,
 
-        Boolean isNotCancelled
+        Boolean isNotCancelled,
+        Boolean isReserve
 ) {
 }

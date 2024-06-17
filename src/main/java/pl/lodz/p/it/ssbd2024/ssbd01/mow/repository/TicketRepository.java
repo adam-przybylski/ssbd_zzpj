@@ -46,4 +46,7 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     Page<Ticket> findAllByAccountIdAndEndTimeBeforeNow(UUID accountId, LocalDateTime now, Pageable pageable);
 
     List<Ticket> findBySession_Id(UUID id);
+
+    @PreAuthorize("hasRole('ROLE_PARTICIPANT')")
+    Optional<Ticket> findFirstByIsReserveTrueOrderByReservationTime();
 }

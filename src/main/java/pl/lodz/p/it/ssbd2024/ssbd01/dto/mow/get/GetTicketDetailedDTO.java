@@ -13,7 +13,8 @@ public record GetTicketDetailedDTO(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime reservationTime,
 
-        Boolean isNotCancelled
+        Boolean isNotCancelled,
+        Boolean isReserve
 
 ) {
 }

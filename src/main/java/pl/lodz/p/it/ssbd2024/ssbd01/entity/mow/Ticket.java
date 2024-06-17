@@ -35,13 +35,19 @@ public class Ticket extends ControlledEntity {
 
     @PastOrPresent
     @NotNull
+    @Column(nullable = false)
     private LocalDateTime reservationTime;
 
-    public Ticket(Account account, Session session) {
+    @NotNull
+    @Column(name = "is_reserve", nullable = false)
+    private Boolean isReserve;
+
+    public Ticket(Account account, Session session, Boolean isReserve) {
         this.account = account;
         this.session = session;
         this.isNotCancelled = true;
         this.reservationTime = LocalDateTime.now();
+        this.isReserve = isReserve;
     }
 
     @Override

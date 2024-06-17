@@ -16,7 +16,8 @@ public class TicketDTOConverter {
                 ticket.getSession().getEndTime(),
                 ticket.getSession().getRoom().getName(),
                 ticket.getSession().getRoom().getLocation().getName(),
-                ticket.getIsNotCancelled()
+                ticket.getIsNotCancelled(),
+                ticket.getIsReserve()
         );
     }
 
@@ -25,7 +26,8 @@ public class TicketDTOConverter {
                 ticket.getId(),
                 SessionDTOConverter.toSessionPlDetailedDTO(ticket.getSession()),
                 ticket.getReservationTime(),
-                ticket.getIsNotCancelled()
+                ticket.getIsNotCancelled(),
+                ticket.getIsReserve()
         );
     }
 

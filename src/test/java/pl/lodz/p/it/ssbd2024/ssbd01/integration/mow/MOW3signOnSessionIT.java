@@ -232,7 +232,7 @@ public class MOW3signOnSessionIT extends AbstractControllerIT {
                 .when()
                 .post(baseUrl + "/events/me/session/4b2555e9-61f1-4c1d-9d7a-f425696eb2d2")
                 .then()
-                .statusCode(HttpStatus.CONFLICT.value());
+                .statusCode(HttpStatus.OK.value());
 
     }
 
