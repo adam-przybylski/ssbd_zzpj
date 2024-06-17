@@ -56,11 +56,12 @@ public class MeEventService {
         etagBuilder.append(session.getName())
                 .append(session.getStartTime().toString())
                 .append(session.getEndTime().toString());
+        Boolean isReserve = false;
         if (!ETagBuilder.isETagValid(eTagReceived, etagBuilder.toString())) {
             throw new OptLockException(ExceptionMessages.OPTIMISTIC_LOCK_EXCEPTION);
         }
         if (session.getAvailableSeats() <= 0) {
-            throw new MaxSeatsOfSessionReachedException(ExceptionMessages.MAX_SEATS_REACHED);
+            isReserve = true;
         }
         if (!isSessionActive(session)) {
             throw new SessionNotActiveException(ExceptionMessages.SESSION_NOT_ACTIVE);
@@ -75,8 +76,10 @@ public class MeEventService {
             sessionRepository.saveAndFlush(session);
             return ticketRepository.saveAndFlush(accountTicket.get());
         }
-        session.setAvailableSeats(session.getAvailableSeats() - 1);
-        Ticket ticket = new Ticket(account, session);
+        if(isReserve) {
+            session.setAvailableSeats(session.getAvailableSeats() - 1);
+        }
+        Ticket ticket = new Ticket(account, session,isReserve);
         sessionRepository.saveAndFlush(session);
         return ticketRepository.saveAndFlush(ticket);
     }
