@@ -5,6 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import pl.lodz.p.it.ssbd2024.ssbd01.entity.mok.Account;
 import pl.lodz.p.it.ssbd2024.ssbd01.entity.mow.*;
 import pl.lodz.p.it.ssbd2024.ssbd01.exception.mok.OptLockException;
@@ -15,6 +16,7 @@ import pl.lodz.p.it.ssbd2024.ssbd01.util.messages.ExceptionMessages;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -224,4 +226,45 @@ public class SessionService {
     public List<Session> getSessions() {
         return sessionRepository.findAll();
     }
+
+
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            rollbackFor = {Exception.class},
+            timeoutString = "${transaction.timeout}")
+    @PreAuthorize("hasRole('ROLE_SYSTEM')")
+    public void updateTemperatureForUpcomingSessions() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nowPlus14Days = now.plusDays(14);
+
+        List<Session> sessions = sessionRepository.findAllSessionsStartingIn14DaysOrLess(now, nowPlus14Days);
+
+        double latitude = 51.7450;
+        double longitude = 19.4522;
+
+        String url = String.format("https://api.open-meteo.com/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&hourly=temperature_2m");
+
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> response;
+        try {
+            response = restTemplate.getForObject(url, Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while fetching temperature data: " + e.getMessage());
+        }
+
+        if (response == null) {
+            throw new RuntimeException("Error while fetching temperature data: response is null");
+        }
+
+        Map<String, Object> hourly = (Map<String, Object>) response.get("hourly");
+        List<Double> temperatures = (List<Double>) hourly.get("temperature_2m");
+
+        for (Session session : sessions) {
+            int hour = session.getStartTime().getHour();
+            Double temperature = temperatures.get(hour);
+            session.setTemperature(temperature);
+            sessionRepository.saveAndFlush(session);
+        }
+    }
+
 }

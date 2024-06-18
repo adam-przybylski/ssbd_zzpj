@@ -60,6 +60,8 @@ public class Session extends ControlledEntity {
     @Max(1024)
     private Integer maxSeats;
 
+    private Double temperature;
+
     @Min(0)
     private int availableSeats;
 
