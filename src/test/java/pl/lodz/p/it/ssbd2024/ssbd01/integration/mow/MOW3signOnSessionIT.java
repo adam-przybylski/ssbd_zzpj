@@ -1,15 +1,21 @@
 package pl.lodz.p.it.ssbd2024.ssbd01.integration.mow;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import pl.lodz.p.it.ssbd2024.ssbd01.dto.mok.LoginDTO;
+import pl.lodz.p.it.ssbd2024.ssbd01.dto.mow.get.GetSpeakerDTO;
+import pl.lodz.p.it.ssbd2024.ssbd01.dto.mow.get.GetTicketDTO;
 import pl.lodz.p.it.ssbd2024.ssbd01.integration.AbstractControllerIT;
 import pl.lodz.p.it.ssbd2024.ssbd01.util.ETagBuilder;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
@@ -217,6 +223,8 @@ public class MOW3signOnSessionIT extends AbstractControllerIT {
                 .post(baseUrl + "/events/me/session/4b2555e9-61f1-4c1d-9d7a-f425696eb2d2")
                 .then()
                 .statusCode(HttpStatus.OK.value());
+
+
         given()
                 .contentType("application/json")
                 .header("Authorization", "Bearer " + secondParticipantToken)
@@ -225,6 +233,17 @@ public class MOW3signOnSessionIT extends AbstractControllerIT {
                 .post(baseUrl + "/events/me/session/4b2555e9-61f1-4c1d-9d7a-f425696eb2d2")
                 .then()
                 .statusCode(HttpStatus.OK.value());
+        var resp1 = given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + secondParticipantToken)
+                .when()
+                .get(baseUrl + "/events/me/sessions")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+        var content1 = objectMapper.readValue(resp1.extract().body().asString(),new TypeReference<Page<GetTicketDTO>>(){});
+        Assertions.assertEquals(content1.getTotalElements(), 1);
+        Assertions.assertFalse(content1.getContent().getFirst().isReserve());
+        UUID secondParticipantTicketId = content1.getContent().getFirst().id();
         given()
                 .contentType("application/json")
                 .header("Authorization", "Bearer " + thirdParticipantToken)
@@ -233,6 +252,58 @@ public class MOW3signOnSessionIT extends AbstractControllerIT {
                 .post(baseUrl + "/events/me/session/4b2555e9-61f1-4c1d-9d7a-f425696eb2d2")
                 .then()
                 .statusCode(HttpStatus.OK.value());
+        var resp2 = given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + thirdParticipantToken)
+                .when()
+                .get(baseUrl + "/events/me/sessions")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+        var content2 = objectMapper.readValue(resp2.extract().body().asString(),new TypeReference<Page<GetTicketDTO>>(){});
+        Assertions.assertEquals(content2.getTotalElements(), 1);
+        Assertions.assertTrue(content2.getContent().getFirst().isReserve());
+
+        var res = given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + secondParticipantToken)
+                .when()
+                .get(baseUrl + "/events/me/session/" + secondParticipantTicketId)
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        String etag2 = res.extract().header("ETag");
+        etag2 = etag2.substring(1, etag2.length() - 1);
+        System.out.println("etag : " + etag2);
+
+        given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + secondParticipantToken)
+                .header("If-Match", etag2)
+                .when()
+                .delete(baseUrl + "/events/me/session/" + secondParticipantTicketId)
+                .then()
+                .statusCode(HttpStatus.OK.value());
+        var resp3 = given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + secondParticipantToken)
+                .when()
+                .get(baseUrl + "/events/me/sessions")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+        var content3 = objectMapper.readValue(resp3.extract().body().asString(),new TypeReference<Page<GetTicketDTO>>(){});
+        Assertions.assertEquals(content3.getTotalElements(), 1);
+        Assertions.assertFalse(content3.getContent().getFirst().isNotCancelled());
+
+        var resp4 = given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + thirdParticipantToken)
+                .when()
+                .get(baseUrl + "/events/me/sessions")
+                .then()
+                .statusCode(HttpStatus.OK.value());
+        var content4 = objectMapper.readValue(resp4.extract().body().asString(),new TypeReference<Page<GetTicketDTO>>(){});
+        Assertions.assertEquals(content4.getTotalElements(), 1);
+        Assertions.assertFalse(content4.getContent().getFirst().isReserve());
 
     }
 
