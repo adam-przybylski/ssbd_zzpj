@@ -2,6 +2,7 @@ package pl.lodz.p.it.ssbd2024.ssbd01.mow.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +34,18 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
     @Query("SELECT s FROM Session s WHERE s.room.id = :roomId AND (s.startTime <= :endTime AND s.endTime >= :startTime)")
     List<Session> findSessionsInsideRangeAtRoom(UUID roomId, LocalDateTime startTime, LocalDateTime endTime);
 
-
     // https://stackoverflow.com/questions/325933/determine-whether-two-date-ranges-overlap
     @PreAuthorize("hasRole('ROLE_MANAGER')")
     @Query("SELECT s FROM Session s WHERE s.speaker.id = :speakerId AND (s.startTime <= :endTime AND s.endTime >= :startTime)")
     List<Session> findSpeakerSessionsInRange(UUID speakerId, LocalDateTime startTime, LocalDateTime endTime);
+
+    @PreAuthorize("hasRole('ROLE_SYSTEM')")
+    @Query("SELECT s FROM Session s WHERE s.startTime BETWEEN :now AND :nowPlus14Days")
+    List<Session> findAllSessionsStartingIn14DaysOrLess(@Param("now") LocalDateTime now, @Param("nowPlus14Days") LocalDateTime nowPlus14Days);
+
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER', 'ROLE_SYSTEM', 'ROLE_PARTICIPANT')")
+    @Override
+    Session saveAndFlush(Session session);
+
+
 }
