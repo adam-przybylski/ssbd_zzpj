@@ -138,7 +138,7 @@ public class MeEventService {
             throw new TicketAlreadyCancelledException(ExceptionMessages.TICKET_ALREADY_CANCELLED);
         }
         ticket.setIsNotCancelled(false);
-        ticketRepository.findFirstByIsReserveTrueAndIsNotCancelledFalseOrderByReservationTime()
+        ticketRepository.findFirstByIsReserveTrueOrderByReservationTime()
                 .ifPresentOrElse(ticketRes -> {
                                                 ticketRes.setIsReserve(false);
                                                 ticketRepository.saveAndFlush(ticketRes);
