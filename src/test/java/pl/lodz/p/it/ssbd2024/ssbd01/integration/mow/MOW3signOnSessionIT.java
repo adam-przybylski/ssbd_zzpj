@@ -273,7 +273,6 @@ public class MOW3signOnSessionIT extends AbstractControllerIT {
 
         String etag2 = res.extract().header("ETag");
         etag2 = etag2.substring(1, etag2.length() - 1);
-        System.out.println("etag : " + etag2);
 
         given()
                 .contentType("application/json")
